@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For Grade 2 : MR.Mohamed Elsayed ... 01002789996 </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --bg: #030a05; --bg2: #05140a; --card: #0a1f10; 
+            --accent: #39FF14; --accent-glow: rgba(57,255,20,0.4);
+            --green: #34d399; --red: #f87171; --yellow: #fbbf24;
+            --fg: #ffffff; --fg2: #d1d5db; --muted: #9ca3af; --border: #153e20;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        
+        html, body { 
+            height: 100%; 
+            width: 100%; 
+            background: var(--bg); 
+            color: var(--fg); 
+            font-size: clamp(14px, 1.5vw, 22px); 
+            line-height: 1.5;
+            font-family: Arial, Helvetica, sans-serif;
+            overflow: hidden; 
+        }
+        
+        #quizView, #conceptsView { overflow-y: auto; height: 100vh; padding-bottom: 5vh; }
+        .q-font { font-family: Arial, Helvetica, sans-serif; font-size: clamp(18px, 2.2vw, 28px); font-weight: bold; line-height: 1.6;}
+
+        /* التأثيرات والخلفية */
+        .stars-container{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+        .floating-star{position:absolute;font-size:18px;opacity:0;animation:starFloat linear infinite;}
+        @keyframes starFloat{ 0%{opacity:0;transform:translateY(100vh) rotate(0deg) scale(0.5);} 10%{opacity:0.7;} 90%{opacity:0.7;} 100%{opacity:0;transform:translateY(-10vh) rotate(720deg) scale(1.2);} }
+        
+        @keyframes balloonRise { 0% { transform: translateY(100vh) scale(0.8); opacity: 1; } 100% { transform: translateY(-20vh) scale(1.1); opacity: 0; } }
+        .balloon { position: fixed; bottom: -100px; width: 45px; height: 60px; border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%; z-index: 9998; pointer-events: none; opacity: 0.9; box-shadow: inset -5px -5px 10px rgba(0,0,0,0.2); }
+        .balloon::after { content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 10px solid inherit; }
+
+        @keyframes shakeIt{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-8px);} 50%{transform:translateX(8px);} 75%{transform:translateX(-8px);} }
+        .shake{animation:shakeIt 0.4s ease;}
+        @keyframes sparkle{ 0%{box-shadow:0 0 0 0 rgba(57,255,20,0.6);} 50%{box-shadow:0 0 30px 15px rgba(57,255,20,0.3);} 100%{box-shadow:0 0 0 0 rgba(57,255,20,0);} }
+        .sparkle-glow{animation:sparkle 0.8s ease;}
+        .flash-red { animation: redFlash 0.5s ease; }
+        @keyframes redFlash { 0% { box-shadow: inset 0 0 0 9999px rgba(248,113,113,0.3); } 100% { box-shadow: inset 0 0 0 0 rgba(248,113,113,0); } }
+
+        /* ==============================================================
+           شاشة تسجيل الدخول
+           ============================================================== */
+        #loginScreen { position: fixed; inset: 0; background: #010502; z-index: 20000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; width: 100%; height: 100%; }
+        .login-box { border: 2px solid var(--accent); border-radius: 20px; box-shadow: 0 0 40px var(--accent-glow); background: rgba(0,25,5,0.8); padding: clamp(30px, 5vh, 50px); width: 100%; max-width: 500px; text-align: center; }
+        .login-input { width: 100%; background: #010a03; border: 2px solid var(--accent); color: #fff; font-size: clamp(18px, 2.5vw, 24px); padding: 15px; border-radius: 12px; margin-bottom: 25px; text-align: center; outline: none; transition: 0.3s; font-weight:bold; letter-spacing: 2px;}
+        .login-input:focus { box-shadow: 0 0 15px var(--accent-glow); }
+        .login-btn { width: 100%; background: var(--accent); color: #000; font-size: clamp(20px, 3vw, 26px); font-weight: bold; padding: 15px; border-radius: 12px; cursor: pointer; border: none; transition: 0.3s; }
+        .login-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--accent-glow); }
+
+        /* ==============================================================
+           الواجهة الرئيسية (تعديل الأبعاد لتجنب قطع الزر بدون سكرول)
+           ============================================================== */
+        #homeView {
+            width: 100%; height: 100vh; display: flex; flex-direction: column;
+            padding: clamp(10px, 1.5vh, 20px) clamp(10px, 2vw, 30px); gap: clamp(10px, 1.5vh, 20px);
+            box-sizing: border-box; background: var(--bg); overflow: hidden; 
+        }
+
+        .dashboard-border { border: 2px solid var(--accent); border-radius: 16px; box-shadow: 0 0 10px var(--accent-glow); background: rgba(0,20,0,0.4); padding: clamp(10px, 1.5vh, 25px); }
+        
+        .home-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; flex-shrink: 0; }
+        .home-content { display: flex; flex-direction: column; gap: clamp(10px, 1.5vh, 20px); flex: 1; min-height: 0; }
+        @media(min-width: 1024px) { .home-content { flex-direction: row; } }
+
+        .left-panel { flex: 4; display: flex; flex-direction: column; justify-content: space-between; gap: 5px; }
+        .right-panel { flex: 6; display: flex; flex-direction: column; justify-content: center; }
+
+        .btns-grid { display: grid; grid-template-columns: 1fr; gap: clamp(10px, 1.5vh, 20px); height: 100%; }
+        @media(min-width: 640px) { .btns-grid { grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); } }
+
+        .main-menu-btn { display: flex; flex-direction: column; justify-content: center; padding: clamp(10px, 1.5vh, 25px); border-radius: 12px; border: 2px solid transparent; cursor: pointer; transition: 0.3s; text-align: left; box-shadow: 0 4px 10px rgba(0,0,0,0.5); min-height: clamp(65px, 12vh, 150px);}
+        .main-menu-btn:hover { transform: scale(1.02); box-shadow: 0 0 15px var(--accent-glow); border-color: var(--accent);}
+        
+        /* تكبير خطوط الأزرار بشكل ملحوظ */
+        .btn-title { font-size: clamp(22px, 4vh, 46px); font-weight: 900; margin-bottom: 4px; color: #000; line-height: 1.1; text-shadow: 1px 1px 0px rgba(255,255,255,0.3);}
+        .btn-sub { font-size: clamp(14px, 2vh, 22px); font-weight: bold; color: #222; }
+
+        .btn-green { background: linear-gradient(135deg, #6ee7b7, #10b981); }
+        .btn-orange { background: linear-gradient(135deg, #fde047, #fbbf24); }
+        .btn-cyan { background: linear-gradient(135deg, #67e8f9, #06b6d4); }
+
+        /* تعديلات اللوحة اليسرى لضمان ظهور الزر بالكامل */
+        .left-title { font-size: clamp(28px, 5.5vh, 60px); font-weight: bold; color: white; margin-bottom: clamp(5px, 1vh, 15px); line-height: 1.1; }
+        .left-desc { font-size: clamp(14px, 2.5vh, 24px); color: #d1d5db; line-height: 1.4; }
+        .concept-btn-large { 
+            width: 100%; 
+            background: linear-gradient(to bottom, #4ade80, #16a34a); 
+            color: black; 
+            border-radius: 12px; 
+            padding: clamp(10px, 2vh, 20px); 
+            font-size: clamp(18px, 3vh, 32px); 
+            font-weight: bold; 
+            border: 2px solid #15803d; 
+            margin-top: auto; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+        .concept-btn-large:hover { transform: scale(1.03); }
+        .concept-btn-sub { font-size: clamp(12px, 1.8vh, 18px); font-weight: normal; display: block; margin-top: 3px; color: #111; }
+
+        /* Concept Cards */
+        .concept-card{background:var(--card);border:2px solid var(--border);border-radius:22px;padding:clamp(15px, 3vh, 30px);transition:all 0.35s;position:relative;overflow:hidden;}
+        .concept-card:hover{transform:translateY(-5px);box-shadow:0 12px 40px var(--accent-glow);border-color:var(--accent);}
+        .concept-icon{width:65px;height:65px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:14px; background:rgba(57,255,20,0.1); color:var(--accent); border:2px solid var(--accent);}
+        .concept-detail{background:var(--bg2);border-radius:14px;padding:20px;margin-top:12px;font-size:clamp(16px, 2vw, 22px);color:var(--fg2);border:1px solid var(--border);}
+        .section-label{display:inline-flex;align-items:center;gap:10px;padding:10px 20px;border-radius:12px;font-size:clamp(14px, 1.8vw, 20px);font-weight:bold;text-transform:uppercase;letter-spacing:1px;margin-bottom:20px;border:2px solid var(--accent); color:var(--accent); background:rgba(57,255,20,0.1);}
+
+        /* Questions UI */
+        .top-bar-quiz { background: rgba(3,10,5,0.95); border-bottom: 2px solid var(--accent); padding: clamp(10px, 2vh, 15px); position: sticky; top: 0; z-index: 50; box-shadow: 0 4px 15px var(--accent-glow);}
+        .q-card { background: var(--card); border: 2px solid var(--accent); border-radius: 22px; overflow: hidden; margin-bottom: 20px; transition:all 0.3s; box-shadow: 0 0 10px rgba(0,0,0,0.5);}
+        .q-header { display: flex; align-items: flex-start; gap: 16px; padding: clamp(15px, 2.5vh, 25px); flex-direction: column; border-bottom: 1px solid #111;}
+        .q-head-top { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 15px; flex-wrap: wrap;}
+        .q-num { min-width: 50px; height: 50px; border-radius: 12px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: clamp(18px, 2vw, 24px); color: #000; flex-shrink: 0; box-shadow:0 0 15px var(--accent-glow);}
+        
+        .speak-btn { background: #fff; color: #000; border: 2px solid #ddd; border-radius: 10px; padding: 8px 15px; font-size: clamp(14px, 1.5vw, 18px); font-weight: bold; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px;}
+        .speak-btn:hover { background: var(--accent); border-color:var(--accent); transform: scale(1.05); }
+
+        .q-options { padding: clamp(15px, 2.5vh, 25px); display: grid; grid-template-columns: 1fr; gap: 15px; }
+        @media(min-width:768px){ .q-options { grid-template-columns: 1fr 1fr; } }
+        
+        .q-opt { padding: clamp(15px, 2.5vh, 20px); border-radius: 16px; border: 3px solid #333; background: #041007; cursor: pointer; transition: all 0.2s; font-size: clamp(16px, 2vw, 22px); font-weight: bold; display: flex; align-items: center; gap: 15px; user-select:none;}
+        .q-opt:hover:not(.disabled) { border-color: var(--accent); background: rgba(57,255,20,0.1); transform: translateY(-3px); }
+        .opt-letter { width: 45px; height: 45px; border-radius: 10px; background: #222; display: flex; align-items: center; justify-content: center; font-size: clamp(16px, 2vw, 22px); color: var(--muted); font-weight: bold; flex-shrink:0; transition:all 0.2s;}
+        .q-opt:hover:not(.disabled) .opt-letter { color:var(--accent); background:rgba(57,255,20,0.15); }
+        
+        .q-opt.correct { border-color: var(--green)!important; background: rgba(52,211,153,0.15)!important; color: var(--green)!important; cursor:default;}
+        .q-opt.correct .opt-letter { background: var(--green)!important; color: #000!important; }
+        .q-opt.wrong { border-color: var(--red)!important; background: rgba(248,113,113,0.15)!important; color: var(--red)!important; cursor:default;}
+        .q-opt.wrong .opt-letter { background: var(--red)!important; color: #fff!important; }
+        .q-opt.disabled { pointer-events: none; opacity: 0.8; }
+
+        .q-answer { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; background: #020804; }
+        .q-answer.show { max-height: 800px; border-top: 2px solid var(--accent); padding: 20px 25px; }
+        .q-answer-label { display:inline-block; padding: 10px 24px; border-radius: 12px; color: #000; font-size: clamp(16px, 2vw, 22px); font-weight: bold; margin-bottom: 14px;}
+
+        /* Video Overlay */
+        #introScreen { position: fixed; inset: 0; z-index: 9999; background: #000; display: flex; align-items: center; justify-content: center; flex-direction: column; overflow: hidden; width: 100vw; height: 100vh; }
+        #promo-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; display: none; }
+        #intro-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.4); z-index: 2; }
+        
+        #intro-name-overlay { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 5; width: 100%; pointer-events: none;}
+        .video-title { font-family: Arial, sans-serif; font-size: clamp(30px, 8vw, 95px); font-weight: bold; animation: colorSeq 6s infinite; text-shadow: 0px 5px 25px rgba(0,0,0,1); line-height: 1; margin-bottom: 5px; }
+        .video-phone { font-family: Arial, sans-serif; font-size: clamp(20px, 6vw, 65px); font-weight: bold; color: #fff; text-shadow: 0px 5px 25px rgba(0,0,0,1); animation: colorSeq 6s infinite reverse;}
+        @keyframes colorSeq { 0%{color:#fff;} 20%{color:#39FF14;} 40%{color:#FFD700;} 60%{color:#800080;} 80%{color:#f472b6;} 100%{color:#fff;} }
+        
+        #startAppBtn { z-index: 10; font-size: clamp(20px, 4vw, 36px); padding: clamp(15px, 2vh, 25px) clamp(20px, 4vw, 50px); border-radius: 20px; background: var(--accent); color: #000; font-weight: bold; cursor: pointer; border: none; transition: 0.2s; box-shadow: 0 0 40px rgba(57,255,20,0.6);}
+        #startAppBtn:hover { transform: scale(1.05); }
+        #skipBtn { position: absolute; top: 30px; right: 30px; z-index: 10; padding: 10px 20px; font-size: clamp(16px, 2vw, 26px); font-weight:bold; background: rgba(0,0,0,0.6); color: #fff; border-radius: 10px; border: 2px solid #fff; cursor: pointer; }
+
+        .tw-cursor { animation: blink 0.8s infinite; color: var(--accent); font-weight: bold;}
+        @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+
+        .v-array { display:inline-block; font-size: clamp(20px, 4vw, 40px); letter-spacing:8px; background:rgba(255,255,255,0.05); padding:15px 20px; border-radius:15px; text-align:center; margin:10px auto; border:3px dashed var(--accent);}
+        .v-array-row { display: flex; gap: 10px; justify-content:center; }
+        .v-scale { display:flex; justify-content:center; align-items:center; background:#0a1a10; border:3px solid var(--accent); padding:15px; border-radius:15px; margin:10px auto; width:fit-content;}
+        .v-box { background:var(--green); color:#000; padding:10px 20px; border-radius:10px; font-weight:bold; margin:0 20px; border:3px solid #fff; font-size: clamp(18px, 3vw, 28px);}
+        .v-machine { display:inline-flex; align-items:center; gap:15px; background:#222; padding:15px 25px; border-radius:20px; border:3px solid var(--cyan); font-family:monospace; font-size: clamp(20px, 4vw, 35px); color:var(--accent); margin:10px auto;}
+
+        .progress-bar{height:14px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--border);}
+        .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--orange));transition:width 0.4s;border-radius:10px;}
+        
+        .is-hidden { display:none !important; }
+        .tab-content { display:none; }
+        .tab-content.active { display:block; animation:bounceIn 0.4s ease; }
+    </style>
+</head>
+<body>
+
+    <div id="loginScreen">
+        <div class="stars-container" id="loginStars"></div>
+        <div class="login-box relative z-10">
+            <h1 class="text-4xl md:text-5xl font-extrabold mb-2" style="color:var(--accent); text-shadow: 0 0 15px var(--accent-glow);">MR.Mohamed Elsayed</h1>
+            <div class="text-2xl md:text-3xl font-bold text-white mb-8 flex justify-center items-center gap-3">
+                <i class="fas fa-phone-alt text-red-500" style="transform: scaleX(-1);"></i> 01002789996
+            </div>
+            
+            <h2 class="text-2xl md:text-3xl text-gray-300 mb-6 font-bold tracking-widest uppercase">Student Login</h2>
+            
+            <div class="relative w-full mb-8">
+                <i class="fas fa-lock absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-2xl"></i>
+                <input type="password" id="studentCode" class="login-input pl-14" placeholder="Enter Password" autocomplete="off" />
+            </div>
+
+            <button id="loginBtn" onclick="attemptLogin()" class="login-btn">SUBMIT</button>
+            <p id="loginError" class="text-red-500 font-bold text-xl mt-4 is-hidden"></p>
+        </div>
+    </div>
+
+    <div id="homeView" class="max-w-[1400px] mx-auto is-hidden">
+        <header class="dashboard-border home-header">
+            <div>
+                <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold" style="color:var(--accent); text-shadow: 0 0 10px rgba(57,255,20,0.5); min-height: 40px;">
+                    <span id="tw-text-home"></span><span class="tw-cursor" id="tw-cursor">|</span>
+                </h1>
+                </div>
+            <div class="text-2xl sm:text-3xl md:text-4xl font-bold text-white flex items-center gap-3">
+                <i class="fas fa-phone-alt text-red-500" style="transform: scaleX(-1);"></i> 01002789996
+            </div>
+        </header>
+
+        <div class="home-content">
+            <div class="dashboard-border left-panel">
+                <div>
+                    <h2 class="left-title">Cambridge Math<br>Grade 2</h2>
+                    <p class="left-desc">
+                        Interactive program covering <b>Number Lines, Arrays, Equal Groups, Fractions, Lengths, Weights, Money, and Multi-Step Problems.</b>
+                    </p>
+                </div>
+                <button onclick="openConcepts()" class="concept-btn-large">
+                    📝 View Book Summary & Rules<span class="concept-btn-sub">Learn core concepts</span>
+                </button>
+            </div>
+
+            <div class="dashboard-border right-panel">
+                <div class="btns-grid">
+                    <div class="main-menu-btn btn-green" onclick="startLevel(1)">
+                        <div class="btn-title">1. Numbers & Grid</div><div class="btn-sub">42 Questions</div>
+                    </div>
+                    <div class="main-menu-btn btn-green" onclick="startLevel(2)">
+                        <div class="btn-title">2. Weights & Rounding</div><div class="btn-sub">42 Questions</div>
+                    </div>
+                    <div class="main-menu-btn btn-green" onclick="startLevel(3)">
+                        <div class="btn-title">3. Addition & Logic</div><div class="btn-sub">42 Questions</div>
+                    </div>
+                    <div class="main-menu-btn btn-green" onclick="startLevel(4)">
+                        <div class="btn-title">4. Arrays & Symmetry</div><div class="btn-sub">42 Questions</div>
+                    </div>
+                    <div class="main-menu-btn btn-orange" onclick="startLevel(5)">
+                        <div class="btn-title">5. Money & Time</div><div class="btn-sub">42 Questions</div>
+                    </div>
+                    <div class="main-menu-btn btn-cyan" onclick="startLevel(6)">
+                        <div class="btn-title">6. Word Problems</div><div class="btn-sub">65 Questions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="introScreen" class="is-hidden">
+        <video id="promo-video" playsinline preload="auto"></video>
+        <div id="intro-overlay" class="is-hidden"></div>
+        <div id="intro-name-overlay" class="is-hidden">
+            <div class="video-title">MR.Mohamed Elsayed</div>
+            <div class="video-phone">📞 01002789996</div>
+        </div>
+        <button id="startAppBtn" onclick="playPromo()">Start Mathematical Journey</button>
+        <button id="skipBtn" class="is-hidden" onclick="closePromo()">Skip ⏭</button>
+    </div>
+
+    <audio id="snd-typewriter" preload="auto"></audio>
+    <audio id="snd-win" preload="auto"></audio>
+    <audio id="snd-lose" preload="auto"></audio>
+
+    <div class="stars-container" id="starsContainer"></div>
+
+    <div id="conceptsView" class="max-w-7xl mx-auto px-4 sm:px-6 py-6 relative z-10 is-hidden">
+        <div class="dashboard-border mb-6 flex justify-between items-center flex-wrap gap-4">
+            <h2 class="text-3xl md:text-4xl font-bold" style="color:var(--accent)">Key Concepts Summary</h2>
+            <button onclick="goHome()" class="bg-gray-800 text-white px-6 py-2 rounded-lg font-bold border-2 border-gray-600 hover:bg-gray-700 text-xl md:text-2xl">Back to Menu</button>
+        </div>
+        <div id="conceptsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-8 pb-10"></div>
+    </div>
+
+    <div id="quizView" class="max-w-7xl mx-auto px-4 sm:px-6 py-4 relative z-10 is-hidden">
+        <div class="top-bar-quiz mb-4 flex justify-between items-center flex-wrap gap-3 rounded-xl border-2 border-accent">
+            <div>
+                <h2 id="quizTitle" class="text-2xl md:text-3xl font-bold" style="color:var(--accent)">Level</h2>
+            </div>
+            <div class="flex items-center gap-3">
+                <div style="background:rgba(52,211,153,0.15); color:var(--green); border:2px solid var(--green); padding:6px 12px; border-radius:10px; font-weight:bold; font-size:clamp(16px,2vw,20px);">✅ <span id="correctCount">0</span></div>
+                <div style="background:rgba(248,113,113,0.15); color:var(--red); border:2px solid var(--red); padding:6px 12px; border-radius:10px; font-weight:bold; font-size:clamp(16px,2vw,20px);">❌ <span id="wrongCount">0</span></div>
+                <button onclick="goHome()" class="bg-gray-800 text-white px-5 py-2 rounded-lg font-bold border-2 border-gray-600 hover:bg-gray-700 text-lg md:text-xl">Exit</button>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-4 mb-4">
+            <div style="height:12px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--border); flex:1;">
+                <div id="quizProgressFill" style="height:100%;background:var(--accent);transition:width 0.4s;width:0%;"></div>
+            </div>
+            <span id="quizProgressText" class="text-xl md:text-2xl font-bold" style="color:var(--accent);">0/50</span>
+        </div>
+
+        <div id="questions-1" class="tab-content"></div>
+        <div id="questions-2" class="tab-content"></div>
+        <div id="questions-3" class="tab-content"></div>
+        <div id="questions-4" class="tab-content"></div>
+        <div id="questions-5" class="tab-content"></div>
+        <div id="questions-6" class="tab-content"></div>
+    </div>
+
+    <script>
+    // ==========================================================
+    // 1. نظام الحماية وربط الجهاز (Google Sheets Device Binding)
+    // ==========================================================
+    const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbw0OK-di6VzyLNng7vH8VJdPa_hxNSo2Y_HYPCbfrfTF-Ug79Dkab5qa2qvIkDoDJLL/exec"; 
+
+    function getDeviceId() {
+        let id = localStorage.getItem('math_quest_device_id');
+        if (!id) {
+            id = 'device_' + Math.random().toString(36).substr(2, 9) + Date.now();
+            localStorage.setItem('math_quest_device_id', id);
+        }
+        return id;
+    }
+
+    function unlockApp() {
+        document.getElementById('loginScreen').classList.add('is-hidden');
+        document.getElementById('introScreen').classList.remove('is-hidden');
+    }
+
+    async function attemptLogin() {
+        const code = document.getElementById('studentCode').value.trim();
+        const err = document.getElementById('loginError');
+        const btn = document.getElementById('loginBtn');
+        
+        if(!code) return;
+
+        const masterCodes = ['1234', 'admin', 'sila', 'sajda', 'dina', 'alia', 'areej', 'ahmed', 'anas', 'selim', 'malek', 'ziad'];
+        if(masterCodes.includes(code.toLowerCase())) {
+            unlockApp();
+            return;
+        }
+
+        if(GOOGLE_SHEET_URL === "") {
+            err.textContent = "Invalid Password";
+            err.classList.remove('is-hidden');
+            return;
+        }
+
+        try {
+            btn.textContent = "Checking...";
+            const deviceId = getDeviceId();
+            const url = `${GOOGLE_SHEET_URL}?code=${encodeURIComponent(code)}&deviceId=${encodeURIComponent(deviceId)}`;
+            
+            const res = await fetch(url);
+            const data = await res.json();
+            
+            if(data.status === "ON") {
+                unlockApp();
+            } else if(data.status === "OFF") {
+                err.textContent = "Account Disabled";
+                err.classList.remove('is-hidden');
+            } else if(data.status === "USED_ELSEWHERE") {
+                err.textContent = "Code used on another device";
+                err.classList.remove('is-hidden');
+            } else {
+                err.textContent = "Invalid Password";
+                err.classList.remove('is-hidden');
+            }
+        } catch(e) {
+            err.textContent = "Network Error";
+            err.classList.remove('is-hidden');
+        }
+        btn.textContent = "SUBMIT";
+    }
+
+    document.getElementById("studentCode").addEventListener("keyup", function(event) {
+        if (event.key === "Enter") attemptLogin();
+    });
+
+    // ===== VIDEO & TYPEWRITER LOGIC =====
+    let typeDone = false;
+    function playPromo() {
+        document.getElementById('startAppBtn').classList.add('is-hidden');
+        const v = document.getElementById('promo-video');
+        v.style.display = 'block';
+        document.getElementById('intro-overlay').classList.remove('is-hidden');
+        document.getElementById('intro-name-overlay').classList.remove('is-hidden');
+        document.getElementById('skipBtn').classList.remove('is-hidden');
+        v.src = "math1.mp4";
+        v.load();
+        v.play().catch(e => { console.log("Video skipped"); closePromo(); });
+        v.onended = closePromo;
+        setTimeout(closePromo, 16000);
+    }
+    
+    function closePromo() {
+        if(typeDone) return;
+        document.getElementById('introScreen').classList.add('is-hidden');
+        document.getElementById('promo-video').pause();
+        document.getElementById('homeView').classList.remove('is-hidden');
+        startTypewriter();
+    }
+    
+    function startTypewriter() {
+        if (typeDone) return;
+        const text = "MR.Mohamed Elsayed";
+        const el = document.getElementById('tw-text-home');
+        el.innerHTML = "";
+        let i = 0;
+        const audio = document.getElementById('snd-typewriter');
+        audio.src = "typewriter.mp3";
+        if(audio) { audio.currentTime = 0; audio.play().catch(e=>{}); }
+        
+        const timer = setInterval(() => {
+            if (i < text.length) { el.innerHTML += text.charAt(i); i++; } 
+            else { clearInterval(timer); if(audio) audio.pause(); typeDone = true; document.getElementById('tw-cursor').style.display='none'; }
+        }, 120);
+    }
+
+    // ===== UI EFFECTS =====
+    function createStars() {
+        const c = document.getElementById('starsContainer');
+        const lc = document.getElementById('loginStars');
+        const colors = ['#39FF14','#fbbf24','#22d3ee'];
+        for (let i = 0; i < 30; i++) {
+            const s = document.createElement('i');
+            s.className = `fas fa-star floating-star`;
+            s.style.left = Math.random() * 100 + '%';
+            s.style.color = colors[i % colors.length];
+            s.style.fontSize = (10 + Math.random() * 15) + 'px';
+            s.style.animationDuration = (10 + Math.random() * 20) + 's';
+            s.style.animationDelay = (Math.random() * 15) + 's';
+            c.appendChild(s);
+            if(lc) lc.appendChild(s.cloneNode(true));
+        }
+    }
+    createStars();
+
+    window.readQ = function(level, qIdx) {
+        window.speechSynthesis.cancel();
+        const text = Q_BANK[level][qIdx].q.replace(/<[^>]*>?/gm, '') 
+            .replace(/\+/g, ' plus ').replace(/-/g, ' minus ')
+            .replace(/×/g, ' times ').replace(/÷/g, ' divided by ')
+            .replace(/=/g, ' equals ').replace(/\$/g, ' dollars ').replace(/c\b/g, ' cents ');
+        let msg = new SpeechSynthesisUtterance(text);
+        msg.lang = 'en-US';
+        msg.rate = 0.85;
+        window.speechSynthesis.speak(msg);
+    };
+
+    function goHome() {
+        document.getElementById('conceptsView').classList.add('is-hidden');
+        document.getElementById('quizView').classList.add('is-hidden');
+        document.getElementById('homeView').classList.remove('is-hidden');
+        window.scrollTo(0,0);
+        window.speechSynthesis.cancel();
+    }
+    function openConcepts() {
+        document.getElementById('homeView').classList.add('is-hidden');
+        document.getElementById('conceptsView').classList.remove('is-hidden');
+    }
+    
+    function startLevel(level) {
+        document.getElementById('homeView').classList.add('is-hidden');
+        document.getElementById('quizView').classList.remove('is-hidden');
+        
+        const titles = ["", "1. Numbers & Grid", "2. Weights & Rounding", "3. Addition & Logic", "4. Arrays & Symmetry", "5. Money & Time", "6. Word Problems"];
+        document.getElementById('quizTitle').textContent = titles[level];
+        
+        for(let i=1; i<=6; i++) {
+            let tab = document.getElementById('questions-' + i);
+            if(tab) { if(i === level) tab.classList.add('active'); else tab.classList.remove('active'); }
+        }
+        
+        updateScoreDisplay(level);
+        
+        const totalQ = Q_BANK[level] ? Q_BANK[level].length : 50;
+        const done = state.answered[level].size;
+        const pct = totalQ > 0 ? Math.round((done / totalQ) * 100) : 0;
+        
+        document.getElementById('quizProgressFill').style.width = pct + '%';
+        document.getElementById('quizProgressText').textContent = `${done}/${totalQ}`;
+        
+        document.getElementById('quizView').scrollTo(0,0);
+    }
+
+    function updateScoreDisplay(level) {
+        let c = 0, w = 0;
+        state.answered[level].forEach((val) => {
+            if (val === true) c++;
+            if (val === false) w++;
+        });
+        document.getElementById('correctCount').textContent = c;
+        document.getElementById('wrongCount').textContent = w;
+    }
+
+    // ===== FULL CONCEPTS =====
+    const concepts = [
+        {section:"Section 1: 100 Square Movement",icon:"fas fa-th",color:"#fbbf24",bg:"rgba(251,191,36,0.08)",
+         title:"The 100 Square — Movement Rules",
+         desc:"A 10x10 grid with numbers 1-100. Each direction changes the number by a fixed amount.",
+         details:["Move RIGHT = +1 (adds 1)","Move LEFT = -1 (subtracts 1)","Move DOWN = +10 (adds a full row)","Move UP = -10 (subtracts a full row)","Diagonal down-right = +11 (+10 row + 1 column)","Diagonal down-left = +9 (+10 row - 1 column)","The last column is always: 10, 20, 30... 100","The first column always ends in 1: 1, 11, 21..."]},
+        {icon:"fas fa-pen-fancy",color:"#34d399",bg:"rgba(52,211,153,0.08)",
+         title:"Writing Numbers Between Two Values",
+         desc:"List every integer STRICTLY between two numbers. The endpoints are NOT included.",
+         details:["Between 10 and 20 = 11, 12, 13, 14, 15, 16, 17, 18, 19","Between any consecutive tens = always 9 numbers","Between 0 and 10 = 1, 2, 3, 4, 5, 6, 7, 8, 9","Between 0 and 15 = 1 through 14 (14 numbers)","Watch for off-by-one errors — never include the endpoints!"]},
+        {icon:"fas fa-map-pin",color:"#22d3ee",bg:"rgba(34,211,238,0.08)",
+         title:"Finding Midpoints",
+         desc:"The number exactly halfway between two values. Formula: midpoint = (a + b) / 2",
+         details:["Between 0 and 10 = 5","Between 10 and 20 = 15","Between 20 and 30 = 25","Pattern: between consecutive tens, midpoint always ends in 5","Between 0 and 20 = 10","Between 40 and 60 = 50","Non-standard: between 15 and 25 = 20"]},
+        {section:"Section 2: Number Ranges & Comparing",icon:"fas fa-ruler-horizontal",color:"#a78bfa",bg:"rgba(167,139,250,0.08)",
+         title:"Between Which Multiples of 10?",
+         desc:"Find the two consecutive multiples of 10 that a number sits between.",
+         details:["56 is between 50 and 60 (look at the tens digit: 5)","84 is between 80 and 90 (tens digit: 8)","19 is between 10 and 20 (tens digit: 1)","5 is between 0 and 10 (special case)","A number ending in 5 is exactly at the midpoint of its range"]},
+        {icon:"fas fa-balance-scale",color:"#fb923c",bg:"rgba(251,146,60,0.08)",
+         title:"Comparing Groups & Finding Differences",
+         desc:"Compare two quantities and find how many more one has than the other.",
+         details:["Which is more: 30 shells or 40 beads? Answer: beads (40 > 30)","How many more? Subtract: 40 - 30 = 10","Adding to a group: 30 + 4 = 34","Visual counting: rows of objects (3 rows of 10 = 30)","Always subtract smaller from larger for the difference"]},
+        {section:"Section 3: Weights & Fact Families",icon:"fas fa-weight-hanging",color:"#f87171",bg:"rgba(248,113,113,0.08)",
+         title:"Weight Combinations",
+         desc:"Find all pairs of weights that add up to a target amount in grams.",
+         details:["For 10g: 1+9, 2+8, 3+7, 4+6, 5+5","For 20g: 1+19, 2+18, 5+15, 8+12, 10+10","For 30g: 1+29, 5+25, 10+20, 12+18, 15+15","For 40g: 1+39, 10+30, 15+25, 20+20","For 50g: 1+49, 10+40, 20+30, 25+25","For 70g: 1+69, 10+60, 20+50, 30+40, 35+35"]},
+        {icon:"fas fa-exchange-alt",color:"#f472b6",bg:"rgba(244,114,182,0.08)",
+         title:"Fact Families",
+         desc:"Three numbers linked by 4 equations: 2 additions and 2 subtractions.",
+         details:["Fact family for 3, 7, 10:","  3 + 7 = 10 and 7 + 3 = 10","  10 - 3 = 7 and 10 - 7 = 3","Fact family for 4, 6, 10:","  4 + 6 = 10 and 6 + 4 = 10","  10 - 4 = 6 and 10 - 6 = 4","Always check: does each equation use only the 3 family numbers?"]},
+        {section:"Section 4: Ordering, Number Line & Rounding",icon:"fas fa-sort-numeric-down",color:"#f97316",bg:"rgba(249,115,22,0.08)",
+         title:"Ordering Numbers Smallest to Largest",
+         desc:"Arrange numbers from the smallest value to the biggest value.",
+         details:["Compare digit by digit starting from the left","5, 18, 45, 79, 95 — already correct","12, 3, 67, 34, 89 — becomes 3, 12, 34, 67, 89","Tip: first find the smallest, then the next, etc."]},
+        {icon:"fas fa-arrows-alt-h",color:"#14b8a6",bg:"rgba(20,184,166,0.08)",
+         title:"Proximity — Which Number is Nearer?",
+         desc:"Judge which number is closer to a target by calculating the distance.",
+         details:["Nearer to 0: 5 or 18? Answer: 5 (distance 5 vs 18)","Nearer to 100: 89 or 95? Answer: 95 (distance 11 vs 5)","Nearer to 50: 42 or 67? Answer: 42 (gap 8 vs gap 17)","Rule: pick the number with the smaller distance to the target"]},
+        {icon:"fas fa-minus",color:"#8b5cf6",bg:"rgba(139,92,246,0.08)",
+         title:"The Number Line 0 to 100",
+         desc:"Position numbers correctly on a 0-100 number line.",
+         details:["50 = exact midpoint of the line","25 = quarter mark (one-fourth of the way)","75 = three-quarter mark","10 = very close to 0 (one-tenth)","90 = very close to 100 (nine-tenths)","Halfway between any two numbers = their midpoint"]},
+        {icon:"fas fa-circle-dot",color:"#ec4899",bg:"rgba(236,72,153,0.08)",
+         title:"Rounding to the Nearest 10",
+         desc:"Ones digit 0-4 = round down. Ones digit 5-9 = round up.",
+         details:["34 rounds to 30 (ones digit 4, round down)","67 rounds to 70 (ones digit 7, round up)","15 rounds to 20 (ones digit 5, round up)","82 rounds to 80 (ones digit 2, round down)","49 rounds to 50 (ones digit 9, round up)","Memory trick: 0-4 floor, 5-9 ceiling"]},
+        {section:"Section 5: Number Bonds & Cards",icon:"fas fa-puzzle-piece",color:"#06b6d4",bg:"rgba(6,182,212,0.08)",
+         title:"Number Bonds — Pairs That Sum to a Target",
+         desc:"Find two numbers that add up to a given total.",
+         details:["Pairs for 12: 3+9, 4+8, 5+7, 6+6, 2+10","Pairs for 15: 7+8, 9+6, 10+5, 11+4, 12+3, 13+2","Pairs for 20: 10+10, 11+9, 12+8, 13+7, 14+6, 15+5, 16+4, 17+3, 18+2","Pairs for 30: 15+15, 10+20, 11+19, 12+18, 13+17, 14+16","Heart/Star cards: one number shown, find its complement"]},
+        {icon:"fas fa-heart",color:"#f43f5e",bg:"rgba(244,63,94,0.08)",
+         title:"Heart Cards & Star Cards",
+         desc:"Each card shows a number. Find what completes it to the target sum.",
+         details:["Heart shows 15, target 20: answer is 5 (because 15+5=20)","Star shows 8, target 15: answer is 7 (because 8+7=15)","Heart shows 12, target 20: answer is 8","Star shows 5, target 10: answer is 5","Heart shows 7, target 15: answer is 8","Star shows 11, target 20: answer is 9","Method: Target - Card Number = Answer"]},
+        {section:"Section 6: Arrays & Equivalence",icon:"fas fa-grip",color:"#84cc16",bg:"rgba(132,204,22,0.08)",
+         title:"Arrays — Rows, Columns & Multiplication",
+         desc:"An array is objects arranged in equal rows and columns.",
+         details:["3 rows of 4 = 3 x 4 = 12 total","5 rows of 2 = 5 x 2 = 10 total","4 rows of 5 = 4 x 5 = 20 total","6 x 3 array = 18 objects","Rows are horizontal, columns are vertical","Multiplication sentence: rows x columns = total","In a 4 x 6 array: 4 rows and 6 columns"]},
+        {icon:"fas fa-equals",color:"#eab308",bg:"rgba(234,179,8,0.08)",
+         title:"Equivalent Calculations",
+         desc:"Two calculations are equivalent if they give the SAME result.",
+         details:["12 + 4 = 16 AND 21 - 5 = 16, so they ARE equivalent","15 + 7 = 22 but 24 - 8 = 16, so they are NOT equivalent","18 + 6 = 24 and 27 - 3 = 24, so they ARE equivalent","Always calculate BOTH sides before deciding!"]},
+        {section:"Section 7: Geometry & Measurement",icon:"fas fa-draw-polygon",color:"#f43f5e",bg:"rgba(244,63,94,0.08)",
+         title:"Polygon Sides, Symmetry & Properties",
+         desc:"Identifying shapes, lines of symmetry, and 3D properties.",
+         details:["Triangle → 3 sides, Square → 4 sides, Hexagon → 6 sides","Symmetry: A line splitting a shape into two perfect mirror halves.","Equilateral triangle: 3 lines of symmetry","NOT all triangles are symmetrical!","Circle: infinite lines of symmetry","Cube: 6 faces (but on a table, back and bottom are hidden)"]},
+        {icon:"fas fa-bicycle",color:"#0ea5e9",bg:"rgba(14,165,233,0.08)",
+         title:"Tricycle Wheel Problems",
+         desc:"Each tricycle has 3 wheels. Use multiplication or division to solve.",
+         details:["1 tricycle = 3 wheels","4 tricycles = 4 x 3 = 12 wheels","7 tricycles = 7 x 3 = 21 wheels","10 tricycles = 10 x 3 = 30 wheels","18 wheels: 18 / 3 = 6 tricycles","Mixed: 3 tricycles + 2 bicycles = (3x3)+(2x2) = 9+4 = 13"]},
+        {section:"Section 8: Science Investigation",icon:"fas fa-flask",color:"#22c55e",bg:"rgba(34,197,94,0.08)",
+         title:"Packing Investigation & Time",
+         desc:"Compare how shapes pack and solve time/money problems.",
+         details:["Marbles (spheres) leave MORE gaps because of curved surfaces","Cubes can pack with ZERO gaps if dimensions match the box","Loosely packed = more gaps. Tightly packed = fewer or no gaps.","1 minute = 60 seconds. The winner of a race has the SHORTEST time!","In a throwing contest, the LARGEST distance wins.","Money: Subtract cost from payment to find change."]}
+    ];
+
+    function buildConcepts() {
+        let html = '';
+        concepts.forEach((c, i) => {
+            if(c.section) html += `<div class="col-span-full ${i===0?'mt-0':'mt-8'}"><div class="section-label" style="background:${c.bg};color:${c.color};border-color:${c.color}33;"><i class="fas fa-bookmark"></i> ${c.section}</div></div>`;
+            html += `<div class="concept-card"><div class="concept-icon" style="background:${c.bg};color:${c.color};"><i class="${c.icon}"></i></div><h3 class="text-2xl font-bold mb-3" style="color:${c.color};">${c.title}</h3><p class="text-xl leading-relaxed mb-4" style="color:#a1a1aa;">${c.desc}</p><div class="concept-detail">${c.details.map(d=>`<div class="flex items-start gap-3 mb-2"><span style="color:${c.color};margin-top:6px;font-size:12px;">&#9679;</span><span>${d}</span></div>`).join('')}</div></div>`;
+        });
+        document.getElementById('conceptsGrid').innerHTML = html;
+    }
+    buildConcepts();
+
+    // ===== DATA & LOGIC =====
+    const Q_BANK = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+    const state = { answered: {1:new Map(), 2:new Map(), 3:new Map(), 4:new Map(), 5:new Map(), 6:new Map()} };
+    
+    function vArr(r,c) { let res = "<div class='v-array'>"; for(let i=0; i<r; i++) res += `<div class='v-array-row'>${"⭐".repeat(c)}</div>`; return res + "</div>"; }
+    function vScale(w) { return `<div class='v-scale'><div class='v-box'>${w}</div><span style='font-size:30px;color:white;'>⚖️</span><div class='v-box' style='background:var(--red);color:white;'>?</div></div>`; }
+    function vEq(e) { return `<div class='v-machine'>[ ${e} ] <span style='color:var(--accent)'>➡</span> [ ? ]</div>`; }
+    
+    const ALL_RAW_QS = [];
+    function addRawQ(qText, correct, w1, w2, w3, explanation, steps) {
+        let opts = [ { t: String(correct), isC: true }, { t: String(w1), isC: false }, { t: String(w2), isC: false }, { t: String(w3), isC: false } ];
+        for(let i=opts.length-1; i>0; i--){ const j = Math.floor(Math.random()*(i+1)); [opts[i], opts[j]] = [opts[j], opts[i]]; }
+        ALL_RAW_QS.push({ q: qText, opts: opts, exp: explanation, step: steps });
+    }
+
+    addRawQ("On a 100 square, what happens when you move right?", "Increases by 1", "Decreases by 1", "Increases by 10", "Decreases by 10", "Right means next number.", "Add 1.");
+    addRawQ("On a 100 square, what happens when you move left?", "Decreases by 1", "Increases by 1", "Increases by 10", "Decreases by 10", "Left means previous number.", "Subtract 1.");
+    addRawQ("On a 100 square, what happens when you move down?", "Increases by 10", "Decreases by 10", "Increases by 1", "Decreases by 1", "Down adds a full row.", "Add 10.");
+    addRawQ("On a 100 square, what happens when you move up?", "Decreases by 10", "Increases by 10", "Increases by 1", "Decreases by 1", "Up subtracts a full row.", "Subtract 10.");
+    addRawQ("What is 1 place to the right of 45?", "46", "44", "55", "35", "Right adds 1.", "45 + 1 = 46");
+    addRawQ("What is 1 place to the left of 67?", "66", "68", "57", "77", "Left subtracts 1.", "67 - 1 = 66");
+    addRawQ("What is directly below 23?", "33", "13", "24", "22", "Below adds 10.", "23 + 10 = 33");
+    addRawQ("What is directly above 88?", "78", "98", "87", "89", "Above subtracts 10.", "88 - 10 = 78");
+    addRawQ("What pattern is in the first column?", "Ends in 1", "Ends in 0", "All even", "Ends in 9", "1, 11, 21, 31...", "Ends in 1.");
+    addRawQ("What pattern is in the last column?", "Ends in 0", "Ends in 1", "All odd", "Ends in 9", "10, 20, 30, 40...", "Ends in 0.");
+    addRawQ("Moving diagonally down-right changes a number by?", "+11", "+10", "+9", "+1", "Down (+10) and Right (+1).", "10 + 1 = 11");
+    addRawQ("Moving diagonally down-left changes a number by?", "+9", "+10", "+11", "-1", "Down (+10) and Left (-1).", "10 - 1 = 9");
+    addRawQ("What is 2 rows below 41?", "61", "51", "43", "21", "Add 20.", "41 + 20 = 61");
+    addRawQ("What is 3 places right of 17?", "20", "14", "47", "21", "Add 3.", "17 + 3 = 20");
+    addRawQ("The number below 55 vs right of 55?", "Below is bigger", "Equal (both 66)", "Right is bigger", "Different", "Below 55 is 65, right is 56.", "65 > 56");
+    addRawQ("What completes: 22, 32, 42, ___?", "52", "43", "53", "62", "Adds 10.", "42+10=52");
+    addRawQ("What completes: 19, 28, 37, ___?", "46", "47", "56", "38", "Adds 9.", "37+9=46");
+    addRawQ("What completes: 41, 52, 63, ___?", "74", "64", "73", "84", "Adds 11.", "63+11=74");
+    addRawQ("What completes: 16, 17, 18, ___?", "19", "20", "15", "28", "Adds 1.", "18+1=19");
+    addRawQ("What completes: 88, 98, ___?", "108", "118", "100", "78", "Adds 10.", "98+10=108");
+    addRawQ("Numbers between 0 and 10?", "1 to 9", "0 to 10", "1 to 10", "0 to 9", "Strictly inside.", "1,2..9");
+    addRawQ("Numbers between 10 and 20?", "11 to 19", "10 to 20", "11 to 20", "12 to 18", "Strictly inside.", "11,12..19");
+    addRawQ("Numbers between 20 and 30?", "21 to 29", "20 to 30", "21 to 30", "22 to 28", "Strictly inside.", "21,22..29");
+    addRawQ("Numbers between 30 and 40?", "31 to 39", "30 to 40", "31 to 40", "32 to 38", "Strictly inside.", "31,32..39");
+    addRawQ("Numbers between 40 and 50?", "41 to 49", "40 to 50", "41 to 50", "42 to 48", "Strictly inside.", "41,42..49");
+    addRawQ("Numbers between 50 and 60?", "51 to 59", "50 to 60", "51 to 60", "52 to 58", "Strictly inside.", "51,52..59");
+    addRawQ("Numbers between 60 and 70?", "61 to 69", "60 to 70", "61 to 70", "62 to 68", "Strictly inside.", "61,62..69");
+    addRawQ("Numbers between 70 and 80?", "71 to 79", "70 to 80", "71 to 80", "72 to 78", "Strictly inside.", "71,72..79");
+    addRawQ("Numbers between 80 and 90?", "81 to 89", "80 to 90", "81 to 90", "82 to 88", "Strictly inside.", "81,82..89");
+    addRawQ("Numbers between 90 and 100?", "91 to 99", "90 to 100", "91 to 100", "92 to 98", "Strictly inside.", "91,92..99");
+    addRawQ("Midpoint between 0 and 10?", "5", "4", "6", "10", "Halfway.", "(0+10)/2=5");
+    addRawQ("Midpoint between 10 and 20?", "15", "14", "16", "20", "Halfway.", "(10+20)/2=15");
+    addRawQ("Midpoint between 20 and 30?", "25", "24", "26", "30", "Halfway.", "(20+30)/2=25");
+    addRawQ("Midpoint between 30 and 40?", "35", "34", "36", "40", "Halfway.", "(30+40)/2=35");
+    addRawQ("Midpoint between 40 and 50?", "45", "44", "46", "50", "Halfway.", "(40+50)/2=45");
+    addRawQ("Midpoint between 50 and 60?", "55", "54", "56", "60", "Halfway.", "(50+60)/2=55");
+    addRawQ("Midpoint between 60 and 70?", "65", "64", "66", "70", "Halfway.", "(60+70)/2=65");
+    addRawQ("Midpoint between 70 and 80?", "75", "74", "76", "80", "Halfway.", "(70+80)/2=75");
+    addRawQ("Midpoint between 80 and 90?", "85", "84", "86", "90", "Halfway.", "(80+90)/2=85");
+    addRawQ("Midpoint between 90 and 100?", "95", "94", "96", "100", "Halfway.", "(90+100)/2=95");
+    addRawQ("Which multiples of 10 does 56 lie between?", "50 and 60", "40 and 50", "60 and 70", "55 and 65", "Tens bounds.", "50 < 56 < 60");
+    addRawQ("Which multiples of 10 does 84 lie between?", "80 and 90", "70 and 80", "90 and 100", "84 and 94", "Tens bounds.", "80 < 84 < 90");
+    addRawQ("Which multiples of 10 does 19 lie between?", "10 and 20", "0 and 10", "20 and 30", "9 and 19", "Tens bounds.", "10 < 19 < 20");
+    addRawQ("Which multiples of 10 does 37 lie between?", "30 and 40", "20 and 30", "40 and 50", "35 and 45", "Tens bounds.", "30 < 37 < 40");
+    addRawQ("Which multiples of 10 does 72 lie between?", "70 and 80", "60 and 70", "80 and 90", "72 and 82", "Tens bounds.", "70 < 72 < 80");
+    addRawQ("Which number is between 60 and 70?", "65", "59", "71", "80", "Inside boundaries.", "60 < 65 < 70");
+    addRawQ("Which number is between 95 and 100?", "98", "90", "101", "80", "Inside boundaries.", "95 < 98 < 100");
+    addRawQ("Which group is more: 30 shells or 40 beads?", "Beads", "Shells", "Equal", "None", "Compare.", "40 > 30");
+    addRawQ("How many more is 40 than 30?", "10", "20", "5", "15", "Subtract.", "40-30=10");
+    addRawQ("If 4 shells are added to 30 shells, total?", "34", "44", "26", "40", "Add.", "30+4=34");
+    addRawQ(`Balance to 100g. One side is 10g, other side?<br>${vScale("10g")}`, "90g", "80g", "110g", "100g", "Sums to 100.", "100-10=90");
+    addRawQ(`Balance to 100g. One side is 20g, other side?<br>${vScale("20g")}`, "80g", "90g", "70g", "120g", "Sums to 100.", "100-20=80");
+    addRawQ(`Balance to 100g. One side is 30g, other side?<br>${vScale("30g")}`, "70g", "60g", "80g", "130g", "Sums to 100.", "100-30=70");
+    addRawQ(`Balance to 100g. One side is 40g, other side?<br>${vScale("40g")}`, "60g", "50g", "70g", "140g", "Sums to 100.", "100-40=60");
+    addRawQ(`Balance to 100g. One side is 50g, other side?<br>${vScale("50g")}`, "50g", "60g", "40g", "150g", "Sums to 100.", "100-50=50");
+    addRawQ(`Balance to 100g. One side is 60g, other side?<br>${vScale("60g")}`, "40g", "50g", "30g", "160g", "Sums to 100.", "100-60=40");
+    addRawQ(`Balance to 100g. One side is 70g, other side?<br>${vScale("70g")}`, "30g", "40g", "20g", "170g", "Sums to 100.", "100-70=30");
+    addRawQ(`Balance to 100g. One side is 80g, other side?<br>${vScale("80g")}`, "20g", "30g", "10g", "180g", "Sums to 100.", "100-80=20");
+    addRawQ(`Balance to 100g. One side is 90g, other side?<br>${vScale("90g")}`, "10g", "20g", "0g", "190g", "Sums to 100.", "100-90=10");
+    addRawQ(`Balance to 100g. One side is 25g, other side?<br>${vScale("25g")}`, "75g", "65g", "85g", "125g", "Sums to 100.", "100-25=75");
+    addRawQ("Fact family for 3, 7, 10. Which is valid?", "3 + 7 = 10", "3 + 10 = 7", "10 + 7 = 3", "7 - 3 = 10", "Valid addition.", "3+7=10");
+    addRawQ("Fact family for 4, 6, 10. Which is valid?", "10 - 4 = 6", "10 + 4 = 6", "4 - 6 = 10", "6 + 10 = 4", "Valid subtraction.", "10-4=6");
+    addRawQ("Fact family for 2, 8, 10. Which is valid?", "10 - 8 = 2", "8 - 10 = 2", "2 + 10 = 8", "10 + 8 = 2", "Valid subtraction.", "10-8=2");
+    addRawQ("Fact family for 1, 9, 10. Which is valid?", "1 + 9 = 10", "10 + 1 = 9", "9 - 10 = 1", "1 - 9 = 10", "Valid addition.", "1+9=10");
+    addRawQ("Fact family for 5, 5, 10. Which is valid?", "10 - 5 = 5", "5 - 10 = 5", "10 + 5 = 5", "5 + 10 = 5", "Valid subtraction.", "10-5=5");
+    addRawQ("Round 12 to the nearest 10.", "10", "20", "12", "15", "Ends in 2 (down).", "Round down to 10");
+    addRawQ("Round 17 to the nearest 10.", "20", "10", "15", "25", "Ends in 7 (up).", "Round up to 20");
+    addRawQ("Round 24 to the nearest 10.", "20", "30", "25", "10", "Ends in 4 (down).", "Round down to 20");
+    addRawQ("Round 29 to the nearest 10.", "30", "20", "25", "40", "Ends in 9 (up).", "Round up to 30");
+    addRawQ("Round 35 to the nearest 10.", "40", "30", "35", "50", "Ends in 5 (up).", "Round up to 40");
+    addRawQ("Round 43 to the nearest 10.", "40", "50", "45", "30", "Ends in 3 (down).", "Round down to 40");
+    addRawQ("Round 58 to the nearest 10.", "60", "50", "55", "70", "Ends in 8 (up).", "Round up to 60");
+    addRawQ("Round 61 to the nearest 10.", "60", "70", "65", "50", "Ends in 1 (down).", "Round down to 60");
+    addRawQ("Round 76 to the nearest 10.", "80", "70", "75", "90", "Ends in 6 (up).", "Round up to 80");
+    addRawQ("Round 84 to the nearest 10.", "80", "90", "85", "70", "Ends in 4 (down).", "Round down to 80");
+    addRawQ("Round 99 to the nearest 10.", "100", "90", "95", "110", "Ends in 9 (up).", "Round up to 100");
+    addRawQ("Round 4 to the nearest 10.", "0", "10", "5", "14", "Ends in 4 (down).", "Round down to 0");
+    addRawQ("Round 8 to the nearest 10.", "10", "0", "5", "18", "Ends in 8 (up).", "Round up to 10");
+    addRawQ("Round 55 to the nearest 10.", "60", "50", "55", "70", "Ends in 5 (up).", "Round up to 60");
+    addRawQ("Round 72 to the nearest 10.", "70", "80", "75", "60", "Ends in 2 (down).", "Round down to 70");
+    addRawQ("Which is heavier: 20g or 80g?", "80g", "20g", "Equal", "Cannot tell", "Compare values.", "80 > 20");
+    addRawQ("Which is heavier: 45g or 35g?", "45g", "35g", "Equal", "Cannot tell", "Compare values.", "45 > 35");
+    addRawQ("Which is heavier: 99g or 100g?", "100g", "99g", "Equal", "Cannot tell", "Compare values.", "100 > 99");
+    addRawQ("Order smallest to largest: 12, 3, 67, 34, 89", "3, 12, 34, 67, 89", "89, 67, 34, 12, 3", "3, 34, 12, 67, 89", "12, 3, 34, 67, 89", "Compare digits.", "3 is smallest.");
+    addRawQ("Order smallest to largest: 5, 18, 45, 79, 95", "5, 18, 45, 79, 95", "95, 79, 45, 18, 5", "5, 45, 18, 79, 95", "18, 5, 79, 45, 95", "Compare digits.", "Already sorted.");
+    addRawQ("Order smallest to largest: 99, 23, 56, 7, 41", "7, 23, 41, 56, 99", "99, 56, 41, 23, 7", "7, 41, 23, 56, 99", "23, 7, 41, 56, 99", "Compare digits.", "7 is smallest.");
+    addRawQ("Which is nearer to 0: 5 or 18?", "5", "18", "Equal", "Neither", "Smaller absolute value.", "5 < 18");
+    addRawQ("Which is nearer to 0: 12 or 3?", "3", "12", "Equal", "Neither", "Smaller absolute value.", "3 < 12");
+    addRawQ("Which is nearer to 100: 89 or 95?", "95", "89", "Equal", "Neither", "Closer distance to 100.", "100-95=5. 100-89=11.");
+    addRawQ("Which is nearer to 100: 70 or 92?", "92", "70", "Equal", "Neither", "Closer distance to 100.", "100-92=8. 100-70=30.");
+    addRawQ("Which is nearer to 50: 42 or 67?", "42", "67", "Equal", "Neither", "Distance to 50.", "50-42=8. 67-50=17.");
+    addRawQ("On a 0-100 line, where does 50 go?", "Exact midpoint", "Quarter mark", "Three-quarter", "End", "50 is half of 100.", "Midpoint.");
+    addRawQ("On a 0-100 line, where does 25 go?", "Quarter mark", "Exact midpoint", "Three-quarter", "End", "25 is 1/4 of 100.", "Quarter.");
+    addRawQ("On a 0-100 line, where does 75 go?", "Three-quarter", "Exact midpoint", "Quarter mark", "End", "75 is 3/4 of 100.", "Three-quarter.");
+    addRawQ("What comes next: 2, 4, 6, 8, ___?", "10", "9", "12", "11", "Count by 2.", "8+2=10");
+    addRawQ("What comes next: 5, 10, 15, 20, ___?", "25", "30", "21", "15", "Count by 5.", "20+5=25");
+    addRawQ("What comes next: 10, 20, 30, ___?", "40", "50", "35", "45", "Count by 10.", "30+10=40");
+    addRawQ("Order largest to smallest: 100, 50, 25, 75, 0", "100, 75, 50, 25, 0", "0, 25, 50, 75, 100", "100, 50, 75, 25, 0", "0, 50, 25, 75, 100", "Descending.", "Start with 100.");
+    addRawQ("Which is nearer to 0: 30 or 70?", "30", "70", "Equal", "Neither", "Closer distance.", "30 < 70");
+    addRawQ("Round 49 to nearest 10.", "50", "40", "49", "55", "Ends in 9.", "Round up to 50.");
+    addRawQ("Write two numbers that add to 20.", "10 + 10", "9 + 10", "11 + 10", "9 + 12", "Sum must be 20.", "10+10=20");
+    addRawQ("Write two numbers that add to 20.", "12 + 8", "11 + 8", "13 + 8", "10 + 9", "Sum must be 20.", "12+8=20");
+    addRawQ("What pairs with 3 to make 12?", "9", "8", "10", "7", "12 - 3.", "12-3=9");
+    addRawQ("What pairs with 7 to make 12?", "5", "6", "4", "3", "12 - 7.", "12-7=5");
+    addRawQ("What pairs with 9 to make 12?", "3", "4", "2", "5", "12 - 9.", "12-9=3");
+    addRawQ("What pairs with 2 to make 12?", "10", "9", "11", "8", "12 - 2.", "12-2=10");
+    addRawQ("What pairs with 4 to make 12?", "8", "7", "9", "6", "12 - 4.", "12-4=8");
+    addRawQ("What pairs with 6 to make 12?", "6", "5", "7", "4", "12 - 6.", "12-6=6");
+    addRawQ(`Calculate:<br>${vEq('5 + 5')}`, "10", "9", "11", "8", "Basic addition.", "5+5=10");
+    addRawQ(`Calculate:<br>${vEq('8 + 7')}`, "15", "14", "16", "13", "Basic addition.", "8+7=15");
+    addRawQ(`Calculate:<br>${vEq('9 + 6')}`, "15", "14", "16", "13", "Basic addition.", "9+6=15");
+    addRawQ(`Calculate:<br>${vEq('4 + 8')}`, "12", "11", "13", "10", "Basic addition.", "4+8=12");
+    addRawQ(`Calculate:<br>${vEq('7 + 9')}`, "16", "15", "17", "14", "Basic addition.", "7+9=16");
+    addRawQ("Which three numbers add to 20?", "5 + 5 + 10", "5 + 6 + 10", "4 + 5 + 10", "5 + 5 + 9", "Sum must be 20.", "5+5+10=20");
+    addRawQ("Count forward from 85. What is next?", "86", "90", "84", "80", "Add 1.", "85+1=86");
+    addRawQ("Count forward from 42. What is next?", "43", "50", "41", "40", "Add 1.", "42+1=43");
+    addRawQ(`Calculate:<br>${vEq('6 + 6')}`, "12", "11", "13", "10", "Basic addition.", "6+6=12");
+    addRawQ(`Calculate:<br>${vEq('3 + 9')}`, "12", "11", "13", "10", "Basic addition.", "3+9=12");
+    addRawQ("Which pair adds to 15?", "7 + 8", "6 + 8", "7 + 9", "8 + 9", "Sum must be 15.", "7+8=15");
+    addRawQ("Which pair adds to 15?", "11 + 4", "10 + 4", "11 + 5", "12 + 4", "Sum must be 15.", "11+4=15");
+    addRawQ(`Calculate:<br>${vEq('11 + 9')}`, "20", "19", "21", "18", "Basic addition.", "11+9=20");
+    addRawQ(`Calculate:<br>${vEq('14 + 6')}`, "20", "19", "21", "18", "Basic addition.", "14+6=20");
+    addRawQ(`Calculate:<br>${vEq('17 + 3')}`, "20", "19", "21", "18", "Basic addition.", "17+3=20");
+    addRawQ("Which pair adds to 10?", "3 + 7", "2 + 7", "3 + 8", "4 + 7", "Sum must be 10.", "3+7=10");
+    addRawQ("Which pair adds to 20?", "11 + 9", "10 + 9", "11 + 10", "12 + 9", "Sum must be 20.", "11+9=20");
+    addRawQ("Which pair adds to 30?", "15 + 15", "14 + 15", "15 + 16", "10 + 15", "Sum must be 30.", "15+15=30");
+    addRawQ("Which different pair adds to 10?", "1 + 9", "2 + 9", "1 + 8", "0 + 9", "Sum must be 10.", "1+9=10");
+    addRawQ("Which different pair adds to 20?", "13 + 7", "12 + 7", "13 + 8", "14 + 7", "Sum must be 20.", "13+7=20");
+    addRawQ("Which different pair adds to 30?", "11 + 19", "10 + 19", "11 + 20", "12 + 19", "Sum must be 30.", "11+19=30");
+    addRawQ("Heart card shows 15. Target 20. Complement?", "5", "6", "4", "7", "20 - 15.", "20-15=5");
+    addRawQ("Star card shows 8. Target 15. Complement?", "7", "8", "6", "9", "15 - 8.", "15-8=7");
+    addRawQ("Heart card shows 12. Target 20. Complement?", "8", "7", "9", "6", "20 - 12.", "20-12=8");
+    addRawQ("Star card shows 5. Target 10. Complement?", "5", "6", "4", "7", "10 - 5.", "10-5=5");
+    addRawQ(`Calculate:<br>${vEq('13 + 7')}`, "20", "19", "21", "18", "Basic addition.", "13+7=20");
+    addRawQ(`Calculate:<br>${vEq('16 + 4')}`, "20", "19", "21", "18", "Basic addition.", "16+4=20");
+    addRawQ(`Calculate:<br>${vEq('18 + 2')}`, "20", "19", "21", "18", "Basic addition.", "18+2=20");
+    addRawQ("Which pair adds to 30?", "10 + 20", "9 + 20", "10 + 21", "11 + 20", "Sum must be 30.", "10+20=30");
+    addRawQ("Heart card shows 7. Target 15. Complement?", "8", "7", "9", "6", "15 - 7.", "15-7=8");
+    addRawQ("Star card shows 11. Target 20. Complement?", "9", "8", "10", "7", "20 - 11.", "20-11=9");
+    addRawQ(`Calculate:<br>${vEq('15 + 5')}`, "20", "19", "21", "18", "Basic addition.", "15+5=20");
+    addRawQ(`Calculate:<br>${vEq('12 + 4')}`, "16", "15", "17", "14", "Basic addition.", "12+4=16");
+    addRawQ(`Calculate:<br>${vEq('21 - 5')}`, "16", "15", "17", "14", "Basic subtraction.", "21-5=16");
+    addRawQ("Why are 12 + 4 and 21 - 5 equivalent?", "Both equal 16", "Both equal 15", "Both equal 17", "Not equivalent", "Equivalent means same total.", "16 = 16");
+    addRawQ(`Calculate:<br>${vEq('15 + 7')}`, "22", "21", "23", "20", "Basic addition.", "15+7=22");
+    addRawQ(`Calculate:<br>${vEq('24 - 8')}`, "16", "15", "17", "14", "Basic subtraction.", "24-8=16");
+    addRawQ(`Calculate:<br>${vEq('18 + 6')}`, "24", "23", "25", "22", "Basic addition.", "18+6=24");
+    addRawQ(`Calculate:<br>${vEq('33 - 7')}`, "26", "25", "27", "24", "Basic subtraction.", "33-7=26");
+    addRawQ(`Calculate:<br>${vEq('9 + 5')}`, "14", "13", "15", "12", "Basic addition.", "9+5=14");
+    addRawQ(`Calculate:<br>${vEq('13 + 6')}`, "19", "18", "20", "17", "Basic addition.", "13+6=19");
+    addRawQ(`Calculate:<br>${vEq('17 - 8')}`, "9", "8", "10", "7", "Basic subtraction.", "17-8=9");
+    addRawQ("What is an array?", "Objects in equal rows & columns", "A type of graph", "A counting method", "A number line", "Definition.", "Rows and columns.");
+    addRawQ(`3 rows of 3 in an array. Total?<br>${vArr(3,3)}`, "9", "7", "6", "10", "Rows × Cols.", "3 × 3 = 9");
+    addRawQ(`5 rows of 2 in an array. Total?<br>${vArr(5,2)}`, "10", "7", "8", "12", "Rows × Cols.", "5 × 2 = 10");
+    addRawQ("How many rows in a 4 × 6 array?", "4", "6", "10", "24", "First number is rows.", "4 rows.");
+    addRawQ("How many columns in a 3 × 7 array?", "7", "3", "10", "21", "Second number is cols.", "7 columns.");
+    addRawQ("Multiplication sentence for 3 rows of 4?", "3 × 4 = 12", "3 + 4 = 12", "4 × 4 = 12", "3 × 5 = 12", "Rows × Cols.", "3 × 4 = 12");
+    addRawQ("Multiplication sentence for 5 rows of 2?", "5 × 2 = 10", "5 + 2 = 10", "5 × 3 = 10", "2 + 2 = 10", "Rows × Cols.", "5 × 2 = 10");
+    addRawQ("Multiplication sentence for 4 rows of 5?", "4 × 5 = 20", "4 + 5 = 20", "5 × 5 = 20", "4 × 6 = 20", "Rows × Cols.", "4 × 5 = 20");
+    addRawQ("How many objects in a 6 × 3 array?", "18", "9", "15", "21", "Rows × Cols.", "6 × 3 = 18");
+    addRawQ("Difference between rows and columns?", "Rows horizontal, columns vertical", "Rows vertical, columns horizontal", "They are the same", "Rows are always longer", "Concept.", "Rows = left/right.");
+    addRawQ("How many sides does a triangle have?", "3", "4", "5", "6", "Tri = 3.", "3 sides.");
+    addRawQ("How many sides does a square have?", "4", "3", "5", "6", "Quad = 4.", "4 sides.");
+    addRawQ("How many sides does a pentagon have?", "5", "4", "6", "7", "Penta = 5.", "5 sides.");
+    addRawQ("How many sides does a hexagon have?", "6", "5", "7", "8", "Hexa = 6.", "6 sides.");
+    addRawQ("How many sides does an octagon have?", "8", "7", "9", "6", "Octa = 8.", "8 sides.");
+    addRawQ("How many lines of symmetry does a square have?", "4", "2", "1", "6", "Mirror lines.", "4 lines.");
+    addRawQ("Is a triangle always symmetrical?", "No, only equilateral", "Yes, always", "No, never", "Yes, sometimes", "Depends on sides.", "Only equilateral.");
+    addRawQ("How many vertices does a triangle have?", "3", "4", "2", "6", "Corners.", "3 vertices.");
+    addRawQ("How many vertices does a rectangle have?", "4", "3", "6", "2", "Corners.", "4 vertices.");
+    addRawQ("Name a shape with 4 equal sides.", "Square", "Rectangle", "Triangle", "Pentagon", "Properties.", "Square or Rhombus.");
+    addRawQ("How many lines of symmetry does a circle have?", "Infinite", "4", "2", "0", "Fold anywhere.", "Infinite.");
+    addRawQ("How many vertices does a hexagon have?", "6", "5", "7", "8", "Corners.", "6 vertices.");
+    addRawQ("How many sides does a quadrilateral have?", "4", "3", "5", "6", "Quad = 4.", "4 sides.");
+    addRawQ("Lines of symmetry in an equilateral triangle?", "3", "1", "2", "4", "All sides equal.", "3 lines.");
+    addRawQ("What shape has 3 sides and 3 vertices?", "Triangle", "Square", "Pentagon", "Hexagon", "Properties.", "Triangle.");
+    addRawQ("How many vertices does a pentagon have?", "5", "4", "6", "3", "Corners.", "5 vertices.");
+    addRawQ("How many sides does a heptagon have?", "7", "6", "8", "5", "Hepta = 7.", "7 sides.");
+    addRawQ("Marbles instead of cubes — more gaps?", "Yes, spheres are round", "No, same gaps", "No, fewer gaps", "Cannot tell", "Round = gaps.", "Yes.");
+    addRawQ("What does 'loosely' packed mean?", "Not tightly arranged", "Very heavy", "Perfectly aligned", "Counted carefully", "Definition.", "Not tight.");
+    addRawQ("What does 'tightly' packed mean?", "Arranged with minimal gaps", "Very light", "Randomly placed", "Measured precisely", "Definition.", "Minimal gaps.");
+    addRawQ("Loosely vs tightly packed cubes?", "Loosely = more gaps", "Tightly = more gaps", "Same gaps", "Cannot compare", "Logic.", "Loose = gaps.");
+    addRawQ("Why test with different shapes?", "Different shapes pack differently", "It looks better", "It's faster", "It's cheaper", "Science.", "Different packing.");
+    addRawQ("How to record packing investigation findings?", "Tables, drawings, measurements", "Only photos", "Only numbers", "Only words", "Science.", "Data recording.");
+    addRawQ("Packing marbles vs cubes — main difference?", "Cubes can have zero gaps", "No difference", "Marbles have fewer gaps", "Both always have gaps", "Cubes fit flush.", "Zero gaps for cubes.");
+    addRawQ("Tightly packed cubes in a matching box — any gaps?", "No", "Yes, always", "Sometimes", "Only with big cubes", "Flush fit.", "No gaps.");
+    addRawQ("Two factors affecting how many objects fit?", "Size of objects and arrangement", "Color and shape only", "Weight only", "Price only", "Logic.", "Size & Arrangement.");
+    addRawQ("Why repeat experiments in science?", "To verify results", "To waste time", "Because it's required", "To get different answers", "Scientific method.", "Verify accuracy.");
+    addRawQ("Which 3D shape has 6 flat faces?", "Cube", "Sphere", "Cone", "Cylinder", "Like a dice.", "Cube.");
+    addRawQ("How many faces can you see on a cube on a table?", "3", "6", "4", "2", "Top, front, side.", "3 faces.");
+    addRawQ("Why can't you see all faces of a cube?", "Some are hidden", "It has only 3", "They disappear", "Invisible", "Object is solid.", "Hidden faces.");
+    addRawQ("Fold a circle, cut shapes, open it. What pattern?", "Symmetrical", "Broken", "Triangle", "Random", "Fold is a mirror.", "Symmetrical.");
+    addRawQ("One fold in a circle gives how many lines of symmetry?", "1", "2", "3", "0", "One fold = one line.", "1 line.");
+    addRawQ("Can a line of symmetry be diagonal?", "Yes", "No", "Never", "Only circles", "Corner to corner.", "Yes.");
+    addRawQ("Does a star have symmetry?", "Yes", "No", "Sometimes", "Never", "Matches both sides.", "Yes.");
+    addRawQ("What must you do to keep a mobile hanging straight?", "Keep it balanced", "Make it heavy", "Make it light", "Paint it", "Physics.", "Balance it.");
+    
+    for(let i=0; i<30; i++) addRawQ(`Calculate 10 + ${i}?`, 10+i, 10+i+1, 10+i-1, 10+i+2, "Addition", `10 + ${i} = ${10+i}`);
+
+    addRawQ("How many wheels does one tricycle have?", "3", "2", "4", "1", "Tri = 3.", "3 wheels.");
+    addRawQ("How many wheels do 4 tricycles have?", "12", "7", "15", "8", "4 × 3.", "12 wheels.");
+    addRawQ("How many wheels do 7 tricycles have?", "21", "10", "24", "18", "7 × 3.", "21 wheels.");
+    addRawQ("How many wheels do 10 tricycles have?", "30", "20", "13", "40", "10 × 3.", "30 wheels.");
+    addRawQ("18 wheels = how many tricycles?", "6", "9", "5", "3", "18 / 3.", "6 tricycles.");
+    addRawQ("Sila earns $1 per wheel. Cleaning 5 tricycles = ?", "$15", "$5", "$8", "$12", "5 × 3 = 15 wheels.", "15 × $1 = $15");
+    addRawQ("Sajda cleans 8 wheels. How many tricycles?", "2 full + 2 extra wheels", "3 tricycles", "2 tricycles", "4 tricycles", "8 / 3.", "2 remainder 2.");
+    addRawQ("Dina earns $1/wheel. Cleans 4 tricycles. Earns?", "$12", "$4", "$7", "$15", "4 × 3 = 12.", "12 × $1 = $12.");
+    addRawQ("Wheels on 3 tricycles + 2 bicycles?", "13", "11", "15", "10", "3×3 + 2×2.", "9 + 4 = 13.");
+    addRawQ("Ahmed threw 5 paces, Malek threw 18 paces, Anas threw 11 paces. Who won?", "Malek", "Ahmed", "Anas", "Nobody", "Furthest wins.", "18 is largest.");
+    addRawQ("Selim ran in 12s, Dina in 22s. Who won?", "Selim", "Dina", "Both", "Nobody", "Shortest time wins.", "12s is smaller.");
+    addRawQ("Alia bought a snack for $3 and paid with a $10 bill. Change?", "$7", "$13", "$3", "$10", "Subtract.", "10 - 3 = 7");
+    addRawQ("Areej wants 10 biscuits. Recipe for 5 needs 70g flour. How much flour?", "140g", "70g", "100g", "200g", "Double the recipe.", "70 × 2 = 140g");
+    addRawQ("How many seconds are in 1 minute?", "60", "100", "50", "120", "Time fact.", "60 seconds.");
+    addRawQ("How many seconds are in 2 minutes?", "120", "60", "100", "80", "Double 60.", "60 + 60 = 120");
+    addRawQ("Ziad buys a toy for $5. He pays with a $10 bill. Change?", "$5", "$15", "$4", "$6", "Subtract 10 - 5.", "10 - 5 = 5");
+    addRawQ("Alia ran in 15 seconds. Sajda ran in 20 seconds. Who won?", "Alia", "Sajda", "Tie", "Nobody", "Shortest time wins.", "15 < 20");
+    addRawQ("Ahmed threw the beanbag 12 paces. Malek threw 16 paces. Who won?", "Malek", "Ahmed", "Tie", "Nobody", "Furthest distance wins.", "16 > 12");
+    addRawQ("Sila cleans 4 tricycles. Total wheels?", "12", "10", "15", "7", "Multiply by 3.", "4 x 3 = 12");
+    addRawQ("Dina has 50c. Areej gives her 20c. Total?", "70c", "30c", "50c", "60c", "Add them.", "50 + 20 = 70");
+    addRawQ("Selim has a string 1 meter long. How many centimeters is that?", "100 cm", "10 cm", "50 cm", "1000 cm", "1 m = 100 cm.", "100");
+    addRawQ("Anas's pencil is 12 cm. Ziad's pencil is 15 cm. Whose is longer?", "Ziad's", "Anas's", "Equal", "Cannot tell", "Compare lengths.", "15 > 12");
+    addRawQ("Areej packs cubes into a box tightly. Are there gaps?", "No", "Yes always", "Sometimes", "Half full", "Cubes fit flush.", "No gaps");
+    addRawQ("Sajda packs marbles into a box. Are there gaps?", "Yes because spheres are round", "No", "Never", "Only square gaps", "Round objects leave gaps.", "Yes");
+    addRawQ("Malek needs 100g of flour. He has 60g. How much more?", "40g", "160g", "50g", "30g", "Subtract.", "100 - 60 = 40");
+    addRawQ("How many cents are in 1 Dollar ($1)?", "100c", "10c", "50c", "1000c", "Money fact.", "100 cents");
+    addRawQ("Ziad has $20. He buys a book for $12. Change?", "$8", "$32", "$10", "$6", "Subtract.", "20 - 12 = 8");
+    addRawQ("Alia measures a door. Which unit is best?", "Meters", "Centimeters", "Grams", "Seconds", "Doors are tall.", "Meters");
+    addRawQ("Ahmed measures a pencil. Which unit is best?", "Centimeters", "Meters", "Kilograms", "Minutes", "Pencils are small.", "Centimeters");
+    addRawQ("Sila weighs an apple. Which unit is best?", "Grams", "Kilograms", "Meters", "Seconds", "Apples are light.", "Grams");
+    addRawQ("Selim weighs a heavy box. Which unit is best?", "Kilograms", "Grams", "Centimeters", "Minutes", "Heavy = kg.", "Kilograms");
+    addRawQ("Dina has $5. Anas has $8. Total?", "$13", "$3", "$10", "$15", "Add.", "5 + 8 = 13");
+    addRawQ("Sajda starts reading at 2:00. She reads for 30 minutes. What time is it?", "2:30", "3:00", "1:30", "2:00", "Add minutes.", "2:00 + 30 = 2:30");
+    addRawQ("Malek has 100c. He spends 30c. What is left?", "70c", "130c", "50c", "80c", "Subtract.", "100 - 30 = 70");
+    addRawQ("Areej has 2 quarters (25c each). Total?", "50c", "25c", "100c", "75c", "Add.", "25 + 25 = 50");
+    addRawQ("Ahmed ran for 40 seconds. Ziad ran for 1 minute. Who was faster?", "Ahmed", "Ziad", "Equal", "Cannot tell", "1 min = 60s. 40 < 60.", "Ahmed");
+    addRawQ("Selim's desk is 2 meters wide. How many cm?", "200 cm", "20 cm", "100 cm", "2000 cm", "Multiply by 100.", "2 x 100 = 200");
+    addRawQ("Alia's book is 20 cm long. Dina's is 30 cm. Difference?", "10 cm", "50 cm", "20 cm", "30 cm", "Subtract.", "30 - 20 = 10");
+    addRawQ("Anas buys 3 apples for $2 each. Total cost?", "$6", "$5", "$2", "$9", "Multiply.", "3 x 2 = 6");
+    addRawQ("Sila gives a $10 bill for a $7 toy. Change?", "$3", "$17", "$4", "$2", "Subtract.", "10 - 7 = 3");
+    addRawQ("Malek has 4 dimes (10c each). Total?", "40c", "10c", "100c", "50c", "Multiply.", "4 x 10 = 40");
+    addRawQ("Sajda measures 1m 50cm. Total in cm?", "150 cm", "50 cm", "100 cm", "200 cm", "1m = 100cm. Add 50.", "150");
+    addRawQ("Ziad slept for 2 hours. How many minutes?", "120", "60", "100", "80", "1 hr = 60. Double it.", "120");
+    addRawQ("Areej has $15. She needs $20. How much more?", "$5", "$35", "$10", "$15", "Subtract.", "20 - 15 = 5");
+    addRawQ("Dina's plant grew 5 cm. It was 10 cm. Now?", "15 cm", "5 cm", "10 cm", "20 cm", "Add.", "10 + 5 = 15");
+    addRawQ("Ahmed saves $2 a week. In 4 weeks?", "$8", "$6", "$2", "$10", "Multiply.", "2 x 4 = 8");
+    addRawQ("Selim has 100g of sugar. Recipe needs 150g. Needs?", "50g", "250g", "100g", "10g", "Subtract.", "150 - 100 = 50");
+    addRawQ("Alia ran 100m. Anas ran 80m. Who ran further?", "Alia", "Anas", "Equal", "Cannot tell", "Compare.", "100 > 80");
+    addRawQ("Sila baked 20 cookies. Malek ate 5. Left?", "15", "25", "10", "20", "Subtract.", "20 - 5 = 15");
+    addRawQ("Ziad has a 50c coin and a 20c coin. Total?", "70c", "30c", "100c", "50c", "Add.", "50 + 20 = 70");
+
+    // التوزيع الآمن على الـ 6 أزرار 
+    for (let i = 1; i <= 6; i++) {
+        const start = (i - 1) * 42;
+        const end = i === 6 ? ALL_RAW_QS.length : start + 42;
+        Q_BANK[i] = ALL_RAW_QS.slice(start, end);
+    }
+
+    // ===== RENDER UI SECURELY =====
+    function buildLevelUI(tab) {
+        const container = document.getElementById(`questions-${tab}`);
+        if(!container) return; 
+        const qs = Q_BANK[tab];
+        if(!qs || qs.length === 0) return;
+
+        const letters = ['A','B','C','D'];
+        let html = '';
+        
+        qs.forEach((item, i) => {
+            let optsHtml = '';
+            item.opts.forEach((opt, j) => {
+                optsHtml += `
+                    <div class="q-opt" id="opt-${tab}-${i}-${j}" onclick="window.selectOption(${tab}, ${i}, ${j})">
+                        <span class="opt-letter">${letters[j]}</span><span>${opt.t}</span>
+                    </div>`;
+            });
+
+            html += `
+            <div class="q-card" id="qcard-${tab}-${i}">
+                <div class="q-header">
+                    <div class="q-head-top">
+                        <div class="flex items-center gap-4">
+                            <div class="q-num">${(tab-1)*42 + i + 1}</div>
+                            <div class="q-text q-font">${item.q}</div>
+                        </div>
+                        <button class="speak-btn" onclick="window.readQ(${tab}, ${i})"><i class="fas fa-volume-up"></i> Read Question</button>
+                    </div>
+                </div>
+                <div class="q-options" id="qopts-${tab}-${i}">
+                    ${optsHtml}
+                </div>
+                <div class="q-answer" id="qans-${tab}-${i}">
+                    <div class="p-6 flex flex-col gap-3">
+                        <span id="qlbl-${tab}-${i}" class="inline-block px-5 py-3 rounded-lg font-bold text-white text-2xl w-fit"></span>
+                        <div class="text-2xl text-gray-200 mt-4"><b>Explanation:</b> <span id="qexp-${tab}-${i}"></span></div>
+                        <div class="text-2xl text-gray-400 mt-2"><b>Steps:</b> <span id="qstep-${tab}-${i}"></span></div>
+                    </div>
+                </div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    window.selectOption = function(tab, qIdx, optIdx) {
+        if (state.answered[tab].has(qIdx)) return;
+        const question = Q_BANK[tab][qIdx];
+        const isCorrect = question.opts[optIdx].isC;
+        state.answered[tab].set(qIdx, isCorrect);
+
+        const btnEl = document.getElementById(`opt-${tab}-${qIdx}-${optIdx}`);
+        const ansDiv = document.getElementById(`qans-${tab}-${qIdx}`);
+        const lbl = document.getElementById(`qlbl-${tab}-${qIdx}`);
+        const expDiv = document.getElementById(`qexp-${tab}-${qIdx}`);
+        const stepDiv = document.getElementById(`qstep-${tab}-${qIdx}`);
+
+        for(let j=0; j<4; j++) {
+            const optDiv = document.getElementById(`opt-${tab}-${qIdx}-${j}`);
+            optDiv.classList.add('disabled');
+            if(question.opts[j].isC) optDiv.classList.add('correct');
+        }
+
+        if (isCorrect) {
+            btnEl.classList.add('correct');
+            lbl.style.background = 'var(--green)';
+            lbl.innerHTML = '✅ Correct! Excellent!';
+            btnEl.classList.add('sparkle-glow');
+            if (typeof confetti !== "undefined") confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            const audio = document.getElementById('snd-win');
+            if(audio){ audio.src="win.mp3"; audio.currentTime=0; let p = audio.play(); if(p !== undefined) p.catch(e=>{}); }
+        } else {
+            btnEl.classList.add('wrong');
+            document.getElementById(`qcard-${tab}-${qIdx}`).classList.add('shake');
+            lbl.style.background = 'var(--red)';
+            lbl.innerHTML = '❌ Incorrect';
+            document.body.classList.add('flash-red');
+            setTimeout(()=>document.body.classList.remove('flash-red'), 500);
+            const audio = document.getElementById('snd-lose');
+            if(audio){ audio.src="lose.wav"; audio.currentTime=0; let p = audio.play(); if(p !== undefined) p.catch(e=>{}); }
+        }
+
+        expDiv.textContent = question.exp;
+        stepDiv.textContent = question.step;
+        ansDiv.classList.add('show');
+        updateScoreDisplay(tab);
+
+        const levelTotal = Q_BANK[tab].length;
+        const pct = levelTotal > 0 ? Math.round((state.answered[tab].size / levelTotal) * 100) : 0;
+        document.getElementById('quizProgressFill').style.width = pct + '%';
+        document.getElementById('quizProgressText').textContent = `${state.answered[tab].size}/${levelTotal}`;
+    };
+
+    for(let i=1; i<=6; i++) { 
+        let div = document.getElementById(`questions-${i}`);
+        if(div) buildLevelUI(i); 
+    }
+    </script>
+</body>
+</html>
