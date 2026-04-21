@@ -26,9 +26,10 @@
             font-family: Arial, Helvetica, sans-serif;
             overflow-x: hidden;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
-        #quizView, #conceptsView { overflow-y: auto; overflow-x: hidden; height: 100vh; padding-bottom: 5vh; }
+        #quizView, #conceptsView { overflow-y: auto; overflow-x: hidden; height: 100vh; padding-bottom: 5vh; -webkit-overflow-scrolling: touch;}
         .q-font { font-family: Arial, Helvetica, sans-serif; font-size: clamp(18px, 2.2vw, 28px); font-weight: bold; line-height: 1.6;}
 
         /* التأثيرات والخلفية */
@@ -59,7 +60,6 @@
         }
         .balloon-anim { animation: flyBalloon 6s linear infinite; }
 
-        /* إصلاح تأثير البالونات عند الإجابة الصحيحة لتظهر بوضوح على الموبايل */
         @keyframes correctBalloon {
             0% { transform: translateY(10vh) scale(0.5); opacity: 1; }
             100% { transform: translateY(-100vh) scale(1.5); opacity: 0; }
@@ -80,7 +80,7 @@
         .login-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--accent-glow); }
 
         /* ==============================================================
-           الواجهة الرئيسية (تم الإصلاح للموبايل)
+           الواجهة الرئيسية 
            ============================================================== */
         #homeView {
             width: 100%; height: 100vh; display: flex; flex-direction: column;
@@ -92,7 +92,6 @@
         
         .home-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; flex-shrink: 0; }
         
-        /* إصلاح الهيكل لكي يأخذ كل قسم مساحته على الموبايل بدون اختفاء */
         .home-content { display: flex; flex-direction: column; gap: clamp(10px, 1.5vh, 20px); flex: 1; min-height: 0; }
         
         .left-panel { width: 100%; display: flex; flex-direction: column; gap: 15px; position: relative; }
@@ -363,12 +362,16 @@
     const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbw0OK-di6VzyLNng7vH8VJdPa_hxNSo2Y_HYPCbfrfTF-Ug79Dkab5qa2qvIkDoDJLL/exec"; 
 
     function getDeviceId() {
-        let id = localStorage.getItem('math_quest_device_id');
-        if (!id) {
-            id = 'device_' + Math.random().toString(36).substr(2, 9) + Date.now();
-            localStorage.setItem('math_quest_device_id', id);
+        try {
+            let id = localStorage.getItem('math_quest_device_id');
+            if (!id) {
+                id = 'device_' + Math.random().toString(36).substr(2, 9) + Date.now();
+                localStorage.setItem('math_quest_device_id', id);
+            }
+            return id;
+        } catch(e) {
+            return 'device_temp_' + Math.random().toString(36).substr(2, 9);
         }
-        return id;
     }
 
     function unlockApp() {
@@ -384,8 +387,7 @@
         if(!code) return;
 
         // كود الماستر
-        const masterCodes = ['Admin@math_2026'];
-        if(masterCodes.includes(code)) {
+        if(code === 'Admin@math_2022' || code === 'admin@math_2022') {
             unlockApp();
             return;
         }
@@ -429,22 +431,25 @@
 
     let typeDone = false;
     function playPromo() {
-        // فك حظر الصوت والنطق للموبايل عند أول ضغطة
-        const audios = ['snd-typewriter', 'snd-win', 'snd-lose'];
-        audios.forEach(id => {
-            let a = document.getElementById(id);
-            if(a) { 
-                a.volume = 0; 
-                let p = a.play(); 
-                if(p !== undefined) p.catch(()=>{}); 
-                a.pause(); 
-                a.currentTime = 0; 
-                a.volume = 1; 
-            }
-        });
-        let s = new SpeechSynthesisUtterance('');
-        s.volume = 0;
-        window.speechSynthesis.speak(s);
+        // حماية فك حظر الصوت للموبايل بشكل آمن جداً
+        try {
+            let s = new SpeechSynthesisUtterance('');
+            window.speechSynthesis.speak(s);
+            
+            const audios = ['snd-typewriter', 'snd-win', 'snd-lose'];
+            audios.forEach(id => {
+                let a = document.getElementById(id);
+                if(a) { 
+                    let p = a.play();
+                    if (p !== undefined) {
+                        p.then(() => {
+                            a.pause();
+                            a.currentTime = 0;
+                        }).catch(e => {});
+                    }
+                }
+            });
+        } catch(e) {}
 
         document.getElementById('startAppBtn').classList.add('is-hidden');
         const v = document.getElementById('promo-video');
@@ -452,11 +457,23 @@
         document.getElementById('intro-overlay').classList.remove('is-hidden');
         document.getElementById('intro-name-overlay').classList.remove('is-hidden');
         document.getElementById('skipBtn').classList.remove('is-hidden');
-        v.src = "math1.mp4";
-        v.load();
-        v.play().catch(e => { console.log("Video skipped"); closePromo(); });
+        
+        try {
+            v.src = "math1.mp4";
+            v.load();
+            let playPromise = v.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(e => {
+                    console.log("Video playback blocked by mobile browser.");
+                    closePromo(); 
+                });
+            }
+        } catch (error) {
+            closePromo();
+        }
+        
         v.onended = closePromo;
-        setTimeout(closePromo, 16000);
+        setTimeout(closePromo, 15000);
     }
     
     function closePromo() {
@@ -475,7 +492,7 @@
         let i = 0;
         const audio = document.getElementById('snd-typewriter');
         audio.src = "typewriter.mp3";
-        if(audio) { audio.currentTime = 0; audio.play().catch(e=>{}); }
+        if(audio) { audio.currentTime = 0; let p = audio.play(); if(p !== undefined) p.catch(e=>{}); }
         
         const timer = setInterval(() => {
             if (i < text.length) { el.innerHTML += text.charAt(i); i++; } 
