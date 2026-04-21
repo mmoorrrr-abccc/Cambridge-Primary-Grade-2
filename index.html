@@ -24,7 +24,8 @@
             font-size: clamp(14px, 1.5vw, 22px); 
             line-height: 1.5;
             font-family: Arial, Helvetica, sans-serif;
-            overflow: hidden; 
+            overflow-x: hidden;
+            overflow-y: auto;
         }
         
         #quizView, #conceptsView { overflow-y: auto; overflow-x: hidden; height: 100vh; padding-bottom: 5vh; }
@@ -58,12 +59,12 @@
         }
         .balloon-anim { animation: flyBalloon 6s linear infinite; }
 
-        /* إصلاح تأثير البالونات عند الإجابة الصحيحة لتظهر بوضوح */
+        /* إصلاح تأثير البالونات عند الإجابة الصحيحة لتظهر بوضوح على الموبايل */
         @keyframes correctBalloon {
-            0% { transform: translateY(0) scale(0.5); opacity: 1; }
-            100% { transform: translateY(-120vh) scale(1.5); opacity: 0; }
+            0% { transform: translateY(10vh) scale(0.5); opacity: 1; }
+            100% { transform: translateY(-100vh) scale(1.5); opacity: 0; }
         }
-        .correct-balloon { position: fixed; bottom: -100px; font-size: clamp(40px, 6vw, 70px); z-index: 99999; animation: correctBalloon 3s ease-in forwards; pointer-events: none; }
+        .correct-balloon { position: fixed; bottom: 0; font-size: clamp(40px, 8vw, 80px); z-index: 99999; animation: correctBalloon 3s ease-in forwards; pointer-events: none; }
 
         /* ==============================================================
            شاشة تسجيل الدخول
@@ -79,23 +80,30 @@
         .login-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--accent-glow); }
 
         /* ==============================================================
-           الواجهة الرئيسية (إصلاح الموبايل بإضافة overflow-y: auto)
+           الواجهة الرئيسية (تم الإصلاح للموبايل)
            ============================================================== */
         #homeView {
             width: 100%; height: 100vh; display: flex; flex-direction: column;
             padding: clamp(10px, 1.5vh, 20px) clamp(10px, 2vw, 30px); gap: clamp(10px, 1.5vh, 20px);
             box-sizing: border-box; background: var(--bg); overflow-y: auto; overflow-x: hidden;
         }
-        @media(min-width: 1024px) { #homeView { overflow: hidden; } }
 
         .dashboard-border { border: 2px solid var(--accent); border-radius: 16px; box-shadow: 0 0 10px var(--accent-glow); background: rgba(0,20,0,0.4); padding: clamp(10px, 1.5vh, 25px); }
         
         .home-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; flex-shrink: 0; }
+        
+        /* إصلاح الهيكل لكي يأخذ كل قسم مساحته على الموبايل بدون اختفاء */
         .home-content { display: flex; flex-direction: column; gap: clamp(10px, 1.5vh, 20px); flex: 1; min-height: 0; }
-        @media(min-width: 1024px) { .home-content { flex-direction: row; } }
+        
+        .left-panel { width: 100%; display: flex; flex-direction: column; gap: 15px; position: relative; }
+        .right-panel { width: 100%; display: flex; flex-direction: column; justify-content: center; gap: 15px; }
 
-        .left-panel { flex: 4; display: flex; flex-direction: column; justify-content: space-between; gap: 5px; position: relative; overflow: hidden; }
-        .right-panel { flex: 6; display: flex; flex-direction: column; justify-content: center; }
+        @media(min-width: 1024px) { 
+            .home-content { flex-direction: row; } 
+            .left-panel { width: 40%; flex: 4; overflow: hidden; justify-content: space-between;}
+            .right-panel { width: 60%; flex: 6; }
+            #homeView { overflow: hidden; }
+        }
 
         .btns-grid { display: grid; grid-template-columns: 1fr; gap: clamp(10px, 1.5vh, 20px); height: 100%; }
         @media(min-width: 640px) { .btns-grid { grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); } }
@@ -236,7 +244,7 @@
             <div class="dashboard-border left-panel">
                 <h2 class="left-title">Cambridge Math<br>Grade 2</h2>
                 
-                <div class="relative flex-1 flex items-center justify-center min-h-[180px] sm:min-h-[250px] w-full border-2 border-dashed border-accent rounded-xl bg-black bg-opacity-30 overflow-hidden" style="margin: 10px 0;">
+                <div class="relative flex-1 flex items-center justify-center min-h-[220px] sm:min-h-[250px] w-full border-2 border-dashed border-accent rounded-xl bg-black bg-opacity-30 overflow-hidden" style="margin: 10px 0;">
                     
                     <div class="absolute top-2 left-6 text-4xl animate-bounce" style="animation-duration: 2s;">🎆</div>
                     <div class="absolute top-8 right-8 text-5xl animate-pulse" style="animation-duration: 1.5s;">🎇</div>
@@ -375,8 +383,8 @@
         
         if(!code) return;
 
-        // كود الماستر الوحيد الذي يعمل الآن بناء على طلبك
-        const masterCodes = ['Admin@math_2022'];
+        // كود الماستر
+        const masterCodes = ['Admin@math_2026'];
         if(masterCodes.includes(code)) {
             unlockApp();
             return;
@@ -421,6 +429,23 @@
 
     let typeDone = false;
     function playPromo() {
+        // فك حظر الصوت والنطق للموبايل عند أول ضغطة
+        const audios = ['snd-typewriter', 'snd-win', 'snd-lose'];
+        audios.forEach(id => {
+            let a = document.getElementById(id);
+            if(a) { 
+                a.volume = 0; 
+                let p = a.play(); 
+                if(p !== undefined) p.catch(()=>{}); 
+                a.pause(); 
+                a.currentTime = 0; 
+                a.volume = 1; 
+            }
+        });
+        let s = new SpeechSynthesisUtterance('');
+        s.volume = 0;
+        window.speechSynthesis.speak(s);
+
         document.getElementById('startAppBtn').classList.add('is-hidden');
         const v = document.getElementById('promo-video');
         v.style.display = 'block';
@@ -975,9 +1000,7 @@
             lbl.innerHTML = '✅ Correct! Excellent!';
             btnEl.classList.add('sparkle-glow');
             
-            /* تم حذف تأثيرات البالونات والنجوم من هنا كما طلبت */
-            /* وتم ترك الكونفيتي (الألوان الصغيرة) فقط */
-            if (typeof confetti !== "undefined") confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            triggerCorrectEffects();
             
             const audio = document.getElementById('snd-win');
             if(audio){ audio.src="win.mp3"; audio.currentTime=0; let p = audio.play(); if(p !== undefined) p.catch(e=>{}); }
